@@ -1,0 +1,17 @@
+{{/*- if .Values.global.istio.enabled -*/}}
+{{- if false }}
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  #name: {{ template "ourpact.fullname" . }}
+  name: cassandra
+spec:
+  hosts:
+  - {{ template "ourpact.fullname" . }}
+  - {{ template "ourpact.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  tcp:
+  - route:
+    - destination:
+        #host: {{ template "ourpact.fullname" . }}
+        host: {{ template "ourpact.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+{{- end -}}

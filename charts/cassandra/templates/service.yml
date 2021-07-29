@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "ourpact.fullname" . }}
+  labels:
+     app: {{ template "ourpact.fullname" . }}
+  #annotations:
+  #  external-dns.alpha.kubernetes.io/hostname: cas-17.dev.ourpact.com
+spec:
+  clusterIP: None
+  ports:
+    - name: tcp-cql
+      port: 9042
+    - name: tcp-internal
+      port: 7199
+  selector:
+    app: {{ template "ourpact.fullname" . }}

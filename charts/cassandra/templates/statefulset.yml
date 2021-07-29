@@ -1,0 +1,97 @@
+---
+apiVersion: "apps/v1"
+kind: StatefulSet
+metadata:
+  name: {{ include "test.fullname" . }}
+  labels:
+    app: {{ include "test.fullname" . }}
+    chart: {{ include "test.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  serviceName: {{ include "test.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "test.fullname" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations: {}
+        #sidecar.istio.io/inject: "false"
+      labels:
+        app: {{ include "test.fullname" . }}
+        release: {{ .Release.Name }}
+    spec:
+      terminationGracePeriodSeconds: 300
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels:
+                app: cassandra
+      containers:
+      - name: cassandra
+        ports:
+        - containerPort: 9042
+        - containerPort: 7199
+        securityContext:
+          capabilities:
+            add:
+              - IPC_LOCK
+              - SETUID
+            drop:
+              - AUDIT_WRITE
+              - DAC_OVERRIDE
+              - FOWNER
+              - FSETID
+              - KILL
+              - MKNOD
+              - NET_BIND_SERVICE
+              - NET_RAW
+              - SETFCAP
+              - SETPCAP
+              - SYS_CHROOT
+        resources:
+          requests:
+            memory: 1000Mi
+            cpu: 1000m
+          limits:
+            memory: 1000Mi
+            cpu: 1000m
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - 'nodetool drain'
+        env:
+          - name: MAX_HEAP_SIZE
+            value: {{ .Values.maxHeapSize }}
+          - name: HEAP_NEWSIZE
+            value: {{ .Values.newHeapSize }}
+          - name: CASSANDRA_CLUSTER_NAME
+            value: {{ .Release.Name }}-cassandra
+          - name: CASSANDRA_SEEDS
+            value: {{ include "test.fullname" . }}-0.{{ include "test.fullname" . }}
+          - name: CASSANDRA_ENDPOINT_SNITCH
+            value: Ec2Snitch
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        volumeMounts:
+          - mountPath: /var/lib/cassandra
+            name: cassandra-storage
+  volumeClaimTemplates:
+  - metadata:
+      name: cassandra-storage
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: {{ .Values.storage }}

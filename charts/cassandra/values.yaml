@@ -1,0 +1,29 @@
+# Default values for cassandra.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+
+global:
+  env: ""
+  tag_only: false
+  mountLogsToHosts: false
+
+  ### Istio Values ###
+  istio:
+    enabled: false
+
+  logstash: dev-logstash.monitor.svc.cluster.local
+  filebeat:
+    enabled: false
+
+enabled: true
+replicaCount: 1
+maxHeapSize: 1024M
+newHeapSize: 1024M
+storage: 20Gi
+terminationGracePeriod: 240
+
+image:
+  repository: cassandra
+  tag: 2.1
+  pullPolicy: IfNotPresent
